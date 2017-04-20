@@ -66,7 +66,7 @@ def query_search(related_points, principle, adjacent, method, k):
         else:
             not_care_list.append(related_points[i])
     print(in_list)
-    if method == 1:
+    if method == 1:  # 超节点 k-truss sfs
         new_adjacent, new_q = multisearch_transfer(in_list, copy.deepcopy(adjacent))
         truss = ss.truss_decomposition(ss.get_edges(copy.deepcopy(new_adjacent)), copy.deepcopy(new_adjacent))
         tcp_index = ss.tcp_index_construction(truss, copy.deepcopy(new_adjacent), ss.get_edges(copy.deepcopy(new_adjacent)))
@@ -83,7 +83,7 @@ def query_search(related_points, principle, adjacent, method, k):
             else:
                 return set()
         return full_result
-    elif method == 2:
+    elif method == 2:    # 超节点 k-core sfs
         new_adjacent, new_q = multisearch_transfer(in_list, copy.deepcopy(adjacent))
         proto_result = ss.local_cst_solution(copy.deepcopy(new_adjacent), k, new_q)
         full_result = copy.copy(proto_result)
@@ -98,6 +98,46 @@ def query_search(related_points, principle, adjacent, method, k):
                 return full_result
             else:
                 return set()
+    elif method == 3:  # filter-search k-core
+        new_adjacent = ss.vertex_delete(adjacent, out_list)
+        proto_result = ss.m_local_cst_solution(copy.deepcopy(new_adjacent), k, in_list, {})
+        full_result = copy.copy(proto_result)
+        for o in out_list:
+            if o in full_result:
+                return set()
+        return full_result
+    elif method == 4: # on-the-fly k-core
+        proto_result = ss.m_local_cst_solution(copy.deepcopy(adjacent), k, in_list, out_list)
+        full_result = copy.copy(proto_result)
+        return full_result
+    elif method == 5:  # k-truss filter-search
+        new_adjacent = ss.vertex_delete(adjacent, out_list)
+        truss = ss.truss_decomposition(ss.get_edges(copy.deepcopy(new_adjacent)), copy.deepcopy(new_adjacent))
+        tcp_index = ss.tcp_index_construction(truss, copy.deepcopy(new_adjacent),
+                                              ss.get_edges(copy.deepcopy(new_adjacent)))
+        if len(in_list) >= 1:
+            proto_result = ss.k_truss_processing(truss, tcp_index, new_adjacent, k, in_list[0])
+            full_result = copy.copy(proto_result)
+            for i in in_list:
+                if i not in full_result:
+                    return set()
+            return full_result
+        else:
+            print("ERROR no search object!")
+        return set()
+    elif method == 6: # k-core sfs
+        proto_result = ss.m_local_cst_solution(copy.deepcopy(adjacent), k, in_list, {})
+        full_result = copy.copy(proto_result)
+        flag = False
+        for o in out_list:
+            if o in full_result:
+                flag = True
+                break
+        if flag:
+            sub_adjacent = ss.get_subgraph(adjacent, full_result)
+            new_adjacent = ss.vertex_delete(sub_adjacent, out_list)
+            full_result = ss.m_local_cst_solution(copy.deepcopy(new_adjacent), k, in_list, {})
+        return full_result
     else:
         return set()
 

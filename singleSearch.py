@@ -25,7 +25,15 @@ def get_graph(file_name):
     return adjacent_dic, vertices_dic
 
 
-def pre_filter(adjacent, o_set):
+def get_subgraph(adjacent, vertex_set):
+    new_adjacent = {}
+    for v in adjacent:
+        if v in vertex_set:
+            new_adjacent[v] = set(adjacent[v]) & vertex_set
+    return new_adjacent
+
+
+def vertex_delete(adjacent, o_set):
     new_adjacent = copy.deepcopy(adjacent)
     for o in o_set:
         neighbor = new_adjacent.pop(o)
@@ -458,6 +466,9 @@ if __name__ == "__main__":
     # trussness = truss_decomposition(get_edges(copy.deepcopy(a_dic)), copy.deepcopy(a_dic))
     # tcp_index_dic = tcp_index_construction(trussness, copy.deepcopy(a_dic), get_edges(copy.deepcopy(a_dic)))
     # print(k_truss_processing(trussness, tcp_index_dic, a_dic, 6, 90))
-    result = label_weighting(a_dic, {1, 2}, {}, 0.5, 6)
-    print(result)
-    print(label_weighting_search(a_dic, result, 0.05, {1, 2}))
+
+    # result = label_weighting(a_dic, {1, 2}, {}, 0.5, 6)
+    # print(result)
+    # print(label_weighting_search(a_dic, result, 0.05, {1, 2}))
+    print(a_dic)
+
