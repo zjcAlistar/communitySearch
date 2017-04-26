@@ -1,5 +1,6 @@
 # encoding: utf-8
 import copy
+import pickle
 import rexxl
 import singleSearch as ss
 import optimal_expression as oe
@@ -100,14 +101,14 @@ def query_search(related_points, principle, adjacent, method, k):
                 return set()
     elif method == 3:  # filter-search k-core
         new_adjacent = ss.vertex_delete(adjacent, out_list)
-        proto_result = ss.m_local_cst_solution(copy.deepcopy(new_adjacent), k, in_list, {})
+        proto_result = ss.m_local_cst_solution(copy.deepcopy(new_adjacent), k, set(in_list), set())
         full_result = copy.copy(proto_result)
         for o in out_list:
             if o in full_result:
                 return set()
         return full_result
-    elif method == 4: # on-the-fly k-core
-        proto_result = ss.m_local_cst_solution(copy.deepcopy(adjacent), k, in_list, out_list)
+    elif method == 4:  # on-the-fly k-core
+        proto_result = ss.m_local_cst_solution(copy.deepcopy(adjacent), k, set(in_list), set(out_list))
         full_result = copy.copy(proto_result)
         return full_result
     elif method == 5:  # k-truss filter-search
@@ -126,7 +127,7 @@ def query_search(related_points, principle, adjacent, method, k):
             print("ERROR no search object!")
         return set()
     elif method == 6: # k-core sfs
-        proto_result = ss.m_local_cst_solution(copy.deepcopy(adjacent), k, in_list, {})
+        proto_result = ss.m_local_cst_solution(copy.deepcopy(adjacent), k, set(in_list), set())
         full_result = copy.copy(proto_result)
         flag = False
         for o in out_list:
@@ -262,15 +263,22 @@ def local_modularity(adjacent, result_c):
 if __name__ == "__main__":
     print("请输入一个社区查询条件：")
     # expr = input()
-    a_dic, v_dic = ss.get_graph("football.txt")
-    # print(a_dic[98])
-    # print(a_dic[117])
-    #r = query_search([98, 117, 1], [1, 1, 0], a_dic, 2, 2)
+    pkl_file = open("dblp.pkl", "rb")
+    # a_dic, v_dic = ss.get_graph("dblp.txt")
 
-    r = ss.m_local_cst_solution(a_dic, 7, {12, 17}, set())
+    a_dic = pickle.load(pkl_file)
+    print("!!")
+    truss = ss.truss_decomposition(ss.get_edges(copy.deepcopy(a_dic)), copy.deepcopy(a_dic))
+
+    # r = query_search([52201], [1], a_dic, 1, 5)
+
+    truss_pkl_file = open("dblp_truss.pkl", "wb")
+    pickle.dump(truss, truss_pkl_file)
+
+    # r = ss.m_local_cst_solution(a_dic, 7, {12, 17}, set())
 
     # r = complex_search(expr, a_dic, 1, 5)
-    print(r)
+    # print(r)
     #
     # print(local_modularity(a_dic, r[0]))
     #
@@ -279,9 +287,9 @@ if __name__ == "__main__":
     # print(result)
     # r = ss.label_weighting_search(a_dic, result, 0.18, {12, 17})
     # print(r)
-
-    gt, gt_r = get_gt("football_gt.txt")
-    # print(gt_r)
-    print(correct_measure_with_t(r, gt_r[gt[12]]))
-    print(local_modularity(a_dic, r))
+    #
+    # gt, gt_r = get_gt("football_gt.txt")
+    # # print(gt_r)
+    # print(correct_measure_with_t(r, gt_r[gt[7]]))
+    # print(local_modularity(a_dic, r))
     # LFR

@@ -1,7 +1,29 @@
 # encoding: utf-8
 import copy
-import math
-from random import sample
+from random import sample, choice
+
+
+def get_new_test(total_vnums, in_nums, v_set, gt_dic_r, method):
+    in_set = set()
+    out_set = set()
+    if method == 1:
+        for i in range(in_nums):
+            v = choice(list(v_set))
+            while v in in_set:
+                v = choice(list(v_set))
+            in_set.add(v)
+        for i in range(total_vnums-in_nums):
+            v = choice(list(v_set))
+            while v in in_set | out_set:
+                v = choice(list(v_set))
+            out_set.add(v)
+    else:
+        target_c = choice(list(gt_dic_r.keys()))
+        while target_c <= 0 or len(gt_dic_r[target_c]) < in_nums:
+            target_c = choice(list(gt_dic_r.keys()))
+        in_set = set(sample(gt_dic_r[target_c], in_nums))
+        out_set = set(sample(v_set - gt_dic_r[target_c], total_vnums - in_nums))
+    return in_set, out_set
 
 
 def get_graph(file_name):
@@ -10,7 +32,9 @@ def get_graph(file_name):
     adjacent_dic = {}
     adjacent_dic_s = {}
     vertices_dic = {}
+    i = 0
     for line in lines:
+        i+=1
         if not line.startswith("#"):
             edge_str = line.strip("\n").split("\t")
             v1 = int(edge_str[0])
@@ -19,7 +43,12 @@ def get_graph(file_name):
                 adjacent_dic_s[v1].add(v2)
             else:
                 adjacent_dic_s[v1] = {v2}
+            if v2 in adjacent_dic:
+                adjacent_dic_s[v2].add(v1)
+            else:
+                adjacent_dic_s[v2] = {v1}
             adjacent_dic[v1] = list(adjacent_dic_s[v1])
+            adjacent_dic[v2] = list(adjacent_dic_s[v2])
     for x in adjacent_dic:
         vertices_dic[x] = len(adjacent_dic[x])
     return adjacent_dic, vertices_dic
@@ -168,7 +197,7 @@ def m_local_cst_solution(adjacent, k, q_set, o_set):
                 if t < min_p:
                     min_p = t
             temp_new_candidates = set()
-            print(min_p)
+            # print(min_p)
             for nc in new_candidates:
                 for key in candidates_info_dic[nc].keys():
                     # print(partitions[key])
