@@ -2,6 +2,8 @@
 import copy
 from random import sample, choice
 
+greedy_limit = 10
+
 
 def get_new_test(total_vnums, in_nums, v_set, gt_dic_r, method):
     in_set = set()
@@ -154,8 +156,8 @@ def local_cst_solution(adjacent, k, q):
 
 
 def m_local_cst_solution(adjacent, k, q_set, o_set):
-    community = copy.copy(q_set)
-    origin_partition = copy.copy(q_set)
+    community = set(copy.copy(q_set))
+    origin_partition = set(copy.copy(q_set))
     partitions = []
     while origin_partition:
         temp_partition = set()
@@ -172,6 +174,7 @@ def m_local_cst_solution(adjacent, k, q_set, o_set):
             neighbors -= temp_partition
             new_vs = neighbors & origin_partition
         partitions.append(temp_partition)
+    print(partitions)
     while True:
         candidates = set()
         candidates_info_dic = {}
@@ -188,6 +191,9 @@ def m_local_cst_solution(adjacent, k, q_set, o_set):
                             candidates_info_dic[n][i] = 0
                         candidates_info_dic[n][-1] += candidates_info_dic[n][i]
         part_connects = set(map(lambda x: candidates_info_dic[x][-1], candidates))
+        if candidates == set():
+            print("NO MORE CANDIDATES")
+            return community
         max_parts_connects = max(part_connects)
         new_candidates = set(filter(lambda x: candidates_info_dic[x][-1] == max_parts_connects, candidates))
         if max_parts_connects == 1:
@@ -216,11 +222,15 @@ def m_local_cst_solution(adjacent, k, q_set, o_set):
         new_candidate_degree = 0
         next_v = -1
         for nc in new_candidates:
-            if len(set(adjacent[nc]) - o_set) > new_candidate_degree:
+            if len(set(adjacent[nc]) - set(o_set)) > new_candidate_degree:
                 new_candidate_degree = len(adjacent[nc])
                 next_v = nc
         if next_v == -1:
             print("ERROR")
+            return community
+        elif len(community) > greedy_limit:
+            print("TO LARGE")
+            return community
         else:
             community.add(next_v)
             temp_partitions = []
@@ -258,29 +268,60 @@ def get_edges(adjacent):
 def truss_decomposition(edges, adjacent):
     sup_list = list(map(lambda x: (x, len(set(adjacent[x[0]]) & set(adjacent[x[1]]))), edges))
     sup_list = sorted(sup_list, key=lambda x: x[1])
+    sup_dic_r = {}
+    for se in sup_list:
+        if se[1] in sup_dic_r:
+            sup_dic_r[se[1]].append(se[0])
+        else:
+            sup_dic_r[se[1]] = [se[0]]
     sup_dic = dict(sup_list)
     truss_dic = {}
     k = 2
-    while sup_list:
-        while sup_list[0][1] <= k-2:
-            e = sup_list[0][0]
+    while sup_dic:
+        keys = sorted(list(sup_dic_r.keys()))
+        min_key = 0
+        for i in range(len(keys)):
+            if sup_dic_r[keys[i]]:
+                min_key = keys[i]
+                break
+        if min_key <= k-2:
+            e = sup_dic_r[min_key][0]
             cn = set(adjacent[e[0]]) & set(adjacent[e[1]])
             for w in cn:
                 if e[0] < w:
-                    sup_dic[(e[0], w)] -= 1
+                    e1 = (e[0], w)
                 else:
-                    sup_dic[(w, e[0])] -= 1
+                    e1 = (w, e[0])
+                sup = sup_dic[e1]
+                sup_dic_r[sup].remove(e1)
+                if (sup - 1) in sup_dic_r:
+                    sup_dic_r[sup - 1].append(e1)
+                else:
+                    sup_dic_r[sup - 1] = [e1]
+                sup_dic[e1] -= 1
+
                 if e[1] < w:
-                    sup_dic[(e[1], w)] -= 1
+                    e2 = (e[1], w)
                 else:
-                    sup_dic[(w, e[1])] -= 1
+                    e2 = (w, e[1])
+                sup = sup_dic[e2]
+                sup_dic_r[sup].remove(e2)
+                if (sup - 1) in sup_dic_r:
+                    sup_dic_r[sup - 1].append(e2)
+                else:
+                    sup_dic_r[sup - 1] = [e2]
+                sup_dic[e2] -= 1
+            # print(sup_dic)
             truss_dic[e] = k
+            print("extracting edge:")
+            print(e)
             sup_dic.pop(e)
+            sup_dic_r[min_key].remove(e)
             adjacent[e[0]].remove(e[1])
             adjacent[e[1]].remove(e[0])
-            sup_list = sorted(sup_dic.items(), key=lambda x: x[1])
-            if not sup_list:
-                break
+            # time consuming
+            # sup_list = sorted(sup_dic.items(), key=lambda x: x[1])
+            continue
         k += 1
     return truss_dic
 

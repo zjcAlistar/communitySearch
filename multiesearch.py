@@ -1,6 +1,7 @@
 # encoding: utf-8
 import copy
 import pickle
+import datetime
 import rexxl
 import singleSearch as ss
 import optimal_expression as oe
@@ -102,6 +103,7 @@ def query_search(related_points, principle, adjacent, method, k):
     elif method == 3:  # filter-search k-core
         new_adjacent = ss.vertex_delete(adjacent, out_list)
         proto_result = ss.m_local_cst_solution(copy.deepcopy(new_adjacent), k, set(in_list), set())
+
         full_result = copy.copy(proto_result)
         for o in out_list:
             if o in full_result:
@@ -221,6 +223,28 @@ def get_gt(gt_filename):
     return gt_dic, gt_dic_reverse
 
 
+def get_gt_in_lines(gt_filename):
+    gt_f = open(gt_filename, "r")
+    lines = gt_f.readlines()
+    gt_dic = {}
+    gt_dic_reverse = {}
+    c = 1
+    for line in lines:
+        if not line.startswith("#"):
+            data_str = line.strip("\n").split("\t")
+            for s in data_str:
+                v = int(s)
+                gt_dic[v] = c
+                if c in gt_dic_reverse:
+                    gt_dic_reverse[c].append(v)
+                else:
+                     gt_dic_reverse[c] = [v]
+        c += 1
+    return gt_dic, gt_dic_reverse
+
+
+
+
 def correct_measure(result, q, gt_dic, gt_dic_r):
     truth = gt_dic[q]
     true_c = gt_dic_r[truth]
@@ -264,32 +288,32 @@ if __name__ == "__main__":
     print("请输入一个社区查询条件：")
     # expr = input()
     pkl_file = open("dblp.pkl", "rb")
-    # a_dic, v_dic = ss.get_graph("dblp.txt")
+    gt_r_pkl_file = open("dblp_gt_r.pkl", "rb")
+    gt_pkl_file = open("dblp_gt.pkl", "rb")
+    # a_dic, v_dic = ss.get_graph("football.txt")
 
     a_dic = pickle.load(pkl_file)
-    print("!!")
+    dblp_gt_r = pickle.load(gt_r_pkl_file)
+    dblp_gt = pickle.load(gt_pkl_file)
+
+    # limit = dblp_gt_r[dblp_gt[265495]]
+    # print(limit)
+    # ss.greedy_limit = len(limit)+10
+    # for i in range(5):
+    #     query_tuple = ss.get_new_test(3, 3, a_dic.keys(), dblp_gt_r, 2)
+    #     print(query_tuple)
+
     truss = ss.truss_decomposition(ss.get_edges(copy.deepcopy(a_dic)), copy.deepcopy(a_dic))
 
-    # r = query_search([52201], [1], a_dic, 1, 5)
+    # for i in [1]:
+    #     time_start = datetime.datetime.now()
+    #     r = query_search([1], [1], a_dic, i, 5)
+    #     time_end = datetime.datetime.now()
+    #     print(time_end-time_start)
+    #     print(r)
 
     truss_pkl_file = open("dblp_truss.pkl", "wb")
     pickle.dump(truss, truss_pkl_file)
 
-    # r = ss.m_local_cst_solution(a_dic, 7, {12, 17}, set())
-
-    # r = complex_search(expr, a_dic, 1, 5)
-    # print(r)
-    #
-    # print(local_modularity(a_dic, r[0]))
-    #
-
-    # result = ss.label_weighting(a_dic, {12, 17}, {40}, 1, 6)
-    # print(result)
-    # r = ss.label_weighting_search(a_dic, result, 0.18, {12, 17})
-    # print(r)
-    #
-    # gt, gt_r = get_gt("football_gt.txt")
-    # # print(gt_r)
-    # print(correct_measure_with_t(r, gt_r[gt[7]]))
-    # print(local_modularity(a_dic, r))
-    # LFR
+        # print(correct_measure_with_t(r, dblp_gt_r[dblp_gt[265495]]))
+        # print(local_modularity(a_dic, r))
